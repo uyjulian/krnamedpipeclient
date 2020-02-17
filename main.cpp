@@ -221,6 +221,10 @@ public:
 
 	void exportFileAsync(ttstr path)
 	{
+		if (exportthread)
+		{
+			TVPThrowExceptionMessage(TJS_W("File currently being exported"));
+		}
 		if (!pipehandle)
 		{
 			TVPThrowExceptionMessage(TJS_W("Pipe isn't opened"));
