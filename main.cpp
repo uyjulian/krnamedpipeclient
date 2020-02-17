@@ -114,7 +114,8 @@ public:
 			TVPThrowExceptionMessage(TJS_W("Pipe isn't opened"));
 		}
 		DWORD bytesavail = 0;
-		BOOL res1 = PeekNamedPipe(pipehandle, NULL, 0, NULL, &bytesavail, NULL);
+		DWORD bytesleftthismessage = 0;
+		BOOL res1 = PeekNamedPipe(pipehandle, NULL, 0, NULL, &bytesavail, &bytesleftthismessage);
 		if (!res1)
 		{
 			ttstr mes;
@@ -125,12 +126,34 @@ public:
 			::LocalFree(lpMsgBuf);
 			TVPThrowExceptionMessage(TJS_W("Could not check pipe handle state: %1"), mes);
 		}
-		uint8_t *data = (uint8_t *)malloc(bytesavail);
+		if (bytesavail == 0)
+		{
+			return tTJSVariant();
+		}
+		DWORD totalbytes = bytesavail + bytesleftthismessage;
+		uint8_t *data = (uint8_t *)malloc(totalbytes);
 		if (!data)
 		{
 			TVPThrowExceptionMessage(TJS_W("Could not allocate memory"));
 		}
-		BOOL res2 = ReadFile(pipehandle, data, bytesavail, &byteshandled, NULL);
+		uint8_t *data_curpos = data;
+		DWORD bytesleft = totalbytes;
+		BOOL res2 = FALSE; 
+		do
+		{
+			res2 = ReadFile(pipehandle, data, bytesleft, &byteshandled, NULL);
+			if (!res2 && ::GetLastError() == ERROR_MORE_DATA && bytesleft != byteshandled)
+			{
+				bytesleft -= byteshandled;
+				data_curpos += byteshandled;
+				continue;
+			}
+			else
+			{
+				break;
+			}
+		} while (1);
+		
 		if (!res2)
 		{
 			ttstr mes;
@@ -142,10 +165,9 @@ public:
 			free(data);
 			TVPThrowExceptionMessage(TJS_W("Could not read from pipe handle: %1"), mes);
 		}
-		tTJSVariant v((const tjs_uint8 *)&data[0], bytesavail);
+		tTJSVariant v((const tjs_uint8 *)&data[0], totalbytes);
 		free(data);
 		return v;
-		return tTJSVariant();
 	}
 
 	tTVInteger write(tTJSVariant buffer_octet)
