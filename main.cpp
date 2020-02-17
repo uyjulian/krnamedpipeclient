@@ -249,6 +249,39 @@ public:
 			TVPThrowExceptionMessage(TJS_W("Could not create export thread: %1"), mes);
 		}
 	}
+
+	void exportFileWait()
+	{
+		if (exportthread)
+		{
+			WaitForSingleObject(exportthread, INFINITE);
+			CloseHandle(exportthread);
+			exportthread = nullptr;
+		}
+		if (exportstream)
+		{
+			exportstream->Release();
+			exportstream = nullptr;
+		}
+	}
+
+	void exportFileKill()
+	{
+		HANDLE savehandle = pipehandle;
+		pipehandle = nullptr;
+		if (exportthread)
+		{
+			WaitForSingleObject(exportthread, INFINITE);
+			CloseHandle(exportthread);
+			exportthread = nullptr;
+		}
+		if (exportstream)
+		{
+			exportstream->Release();
+			exportstream = nullptr;
+		}
+		pipehandle = savehandle;
+	}
 };
 
 NCB_REGISTER_CLASS(NamedPipeClient)
@@ -263,4 +296,6 @@ NCB_REGISTER_CLASS(NamedPipeClient)
 	NCB_METHOD(read);
 	NCB_METHOD(write);
 	NCB_METHOD(exportFileAsync);
+	NCB_METHOD(exportFileWait);
+	NCB_METHOD(exportFileKill);
 };
