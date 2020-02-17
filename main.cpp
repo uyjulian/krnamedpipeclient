@@ -40,8 +40,12 @@ public:
 		}
 	}
 
-	void open(ttstr path, tTVInteger openmode, tTVInteger pipemode, tTVInteger maxinstances, tTVInteger outbuffersize, tTVInteger inbuffersize, tTVInteger defaulttimeout, tTVInteger shouldinherit)
+	void create(ttstr path, tTVInteger openmode, tTVInteger pipemode, tTVInteger maxinstances, tTVInteger outbuffersize, tTVInteger inbuffersize, tTVInteger defaulttimeout, tTVInteger shouldinherit)
 	{
+		if (pipehandle)
+		{
+			TVPThrowExceptionMessage(TJS_W("Pipe already open"));
+		}
 		SECURITY_ATTRIBUTES sattr = {sizeof(SECURITY_ATTRIBUTES), nullptr, !!shouldinherit};
 		pipehandle = CreateNamedPipe(path.c_str(), openmode, pipemode, maxinstances, outbuffersize, inbuffersize, defaulttimeout, &sattr);
 		if (pipehandle == INVALID_HANDLE_VALUE)
@@ -52,7 +56,27 @@ public:
 				NULL, ::GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL );
 			mes = ttstr( (LPCWSTR)lpMsgBuf );
 			::LocalFree(lpMsgBuf);
-			TVPThrowExceptionMessage(TJS_W("Could not open pipe handle: %1"), mes);
+			TVPThrowExceptionMessage(TJS_W("Could not create pipe handle: %1"), mes);
+		}
+	}
+
+	void open(ttstr path, tTVInteger desiredaccess, tTVInteger sharemode, tTVInteger shouldinherit, tTVInteger creationdisposition, tTVInteger flagsandattr)
+	{
+		if (pipehandle)
+		{
+			TVPThrowExceptionMessage(TJS_W("Pipe already open"));
+		}
+		SECURITY_ATTRIBUTES sattr = {sizeof(SECURITY_ATTRIBUTES), nullptr, !!shouldinherit};
+		pipehandle = CreateFile(path.c_str(), desiredaccess, sharemode, &sattr, creationdisposition, flagsandattr, nullptr );
+		if (pipehandle == INVALID_HANDLE_VALUE)
+		{
+			ttstr mes;
+			LPVOID lpMsgBuf;
+			::FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL, ::GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL );
+			mes = ttstr( (LPCWSTR)lpMsgBuf );
+			::LocalFree(lpMsgBuf);
+			TVPThrowExceptionMessage(TJS_W("Could not open path: %1"), mes);
 		}
 	}
 
@@ -194,6 +218,7 @@ NCB_REGISTER_CLASS(NamedPipeClient)
 {
 	Constructor();
 
+	NCB_METHOD(create);
 	NCB_METHOD(open);
 	NCB_METHOD(close);
 	NCB_METHOD(wait);
