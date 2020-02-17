@@ -87,6 +87,17 @@ public:
 			CloseHandle(pipehandle);
 			pipehandle = nullptr;
 		}
+		if (exportthread)
+		{
+			WaitForSingleObject(exportthread, INFINITE);
+			CloseHandle(exportthread);
+			exportthread = nullptr;
+		}
+		if (exportstream)
+		{
+			exportstream->Release();
+			exportstream = nullptr;
+		}
 	}
 
 	tTVInteger wait(ttstr path, tTVInteger timeout)
