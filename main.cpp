@@ -175,7 +175,11 @@ public:
 		{
 			return tTJSVariant();
 		}
-		DWORD totalbytes = bytesavail + bytesleftthismessage;
+		DWORD totalbytes = bytesavail;
+		if (bytesleftthismessage != 0)
+		{
+			totalbytes = bytesleftthismessage;
+		}
 		uint8_t *data = (uint8_t *)malloc(totalbytes);
 		if (!data)
 		{
