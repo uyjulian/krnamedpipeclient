@@ -100,7 +100,7 @@ public:
 		}
 	}
 
-	tTVInteger waitForPath(ttstr path, tTVInteger timeout)
+	static tTVInteger waitForPath(ttstr path, tTVInteger timeout)
 	{
 		BOOL retval = FALSE;
 		LARGE_INTEGER count_to_sec;
