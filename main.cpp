@@ -151,7 +151,7 @@ public:
 		SetNamedPipeHandleState(pipehandle, (mode.Type() == tvtVoid) ? NULL : &mode_dw, (maxcollectioncount.Type() == tvtVoid) ? NULL : &maxcollectioncount_dw, (collectdatatimeout.Type() == tvtVoid) ? NULL : &collectdatatimeout_dw);
 	}
 
-	tTJSVariant read(tTJSVariant buffer_octet)
+	tTJSVariant read()
 	{
 		DWORD byteshandled = 0;
 		if (!pipehandle)
