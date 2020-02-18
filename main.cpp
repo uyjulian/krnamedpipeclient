@@ -102,7 +102,22 @@ public:
 
 	tTVInteger waitForPath(ttstr path, tTVInteger timeout)
 	{
-		return !!WaitNamedPipe(path.c_str(), timeout);
+		BOOL retval = FALSE;
+		LARGE_INTEGER count_to_sec;
+		LARGE_INTEGER ms_start;
+		LARGE_INTEGER ms_end;
+		LARGE_INTEGER ms_last;
+		QueryPerformanceFrequency(&count_to_sec);
+		QueryPerformanceCounter(&ms_start);
+		ms_end.QuadPart = ms_start.QuadPart + (timeout * (count_to_sec.QuadPart / 1000));
+		ms_last.QuadPart = ms_start.QuadPart;
+
+		while (!retval && (ms_end.QuadPart > ms_last.QuadPart))
+		{
+			retval = WaitNamedPipe(path.c_str(), (ms_end.QuadPart - ms_last.QuadPart));
+			QueryPerformanceCounter(&ms_last);
+		}
+		return retval;
 	}
 
 	void waitForConnection()
