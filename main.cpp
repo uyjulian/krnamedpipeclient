@@ -89,7 +89,6 @@ public:
 		}
 		if (exportthread)
 		{
-			WaitForSingleObject(exportthread, INFINITE);
 			CloseHandle(exportthread);
 			exportthread = nullptr;
 		}
@@ -244,7 +243,17 @@ public:
 	{
 		BYTE buffer[1024*16];
 		DWORD size, byteshandled;
+		DWORD err = ::ConnectNamedPipe(pipehandle, NULL) ? 0 : ::GetLastError();
+		if (err != ERROR_PIPE_CONNECTED && err != 0)
+		{
+			return;
+		}
 		while (exportstream->Read(buffer, sizeof buffer, &size) == S_OK && size > 0 && WriteFile(pipehandle, buffer, size, &byteshandled, NULL));
+		if (pipehandle)
+		{
+			CloseHandle(pipehandle);
+			pipehandle = nullptr;
+		}
 	}
 
 	static DWORD WINAPI exportThread(LPVOID this_)
@@ -292,7 +301,10 @@ public:
 	{
 		if (exportthread)
 		{
-			WaitForSingleObject(exportthread, INFINITE);
+			if (pipehandle)
+			{
+				WaitForSingleObject(exportthread, INFINITE);
+			}
 			CloseHandle(exportthread);
 			exportthread = nullptr;
 		}
@@ -309,7 +321,10 @@ public:
 		pipehandle = nullptr;
 		if (exportthread)
 		{
-			WaitForSingleObject(exportthread, INFINITE);
+			if (pipehandle)
+			{
+				WaitForSingleObject(exportthread, INFINITE);
+			}
 			CloseHandle(exportthread);
 			exportthread = nullptr;
 		}
