@@ -100,9 +100,28 @@ public:
 		}
 	}
 
-	tTVInteger wait(ttstr path, tTVInteger timeout)
+	tTVInteger waitForPath(ttstr path, tTVInteger timeout)
 	{
 		return !!WaitNamedPipe(path.c_str(), timeout);
+	}
+
+	void waitForConnection()
+	{
+		if (!pipehandle)
+		{
+			TVPThrowExceptionMessage(TJS_W("Pipe isn't opened"));
+		}
+		DWORD err = ::ConnectNamedPipe(pipehandle, NULL) ? 0 : ::GetLastError();
+		if (err)
+		{
+			ttstr mes;
+			LPVOID lpMsgBuf;
+			::FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS,
+				NULL, err, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (LPTSTR)&lpMsgBuf, 0, NULL );
+			mes = ttstr( (LPCWSTR)lpMsgBuf );
+			::LocalFree(lpMsgBuf);
+			TVPThrowExceptionMessage(TJS_W("Could not open path: %1"), mes);
+		}
 	}
 
 	void setState(tTJSVariant mode, tTJSVariant maxcollectioncount, tTJSVariant collectdatatimeout)
@@ -291,7 +310,8 @@ NCB_REGISTER_CLASS(NamedPipeClient)
 	NCB_METHOD(create);
 	NCB_METHOD(open);
 	NCB_METHOD(close);
-	NCB_METHOD(wait);
+	NCB_METHOD(waitForPath);
+	NCB_METHOD(waitForConnection);
 	NCB_METHOD(setState);
 	NCB_METHOD(read);
 	NCB_METHOD(write);
