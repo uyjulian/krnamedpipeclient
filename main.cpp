@@ -179,12 +179,12 @@ public:
 		{
 			totalbytes = bytesleftthismessage;
 		}
-		uint8_t *data = (uint8_t *)malloc(totalbytes);
+		BYTE *data = (BYTE *)malloc(totalbytes);
 		if (!data)
 		{
 			TVPThrowExceptionMessage(TJS_W("Could not allocate memory"));
 		}
-		uint8_t *data_curpos = data;
+		BYTE *data_curpos = data;
 		DWORD bytesleft = totalbytes;
 		BOOL res2 = FALSE; 
 		do
